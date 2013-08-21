@@ -119,6 +119,7 @@ class RemoteSource(object):
             ('remote-url', 'http://127.0.0.1:8080'),
             ('remote-username', 'admin'),
             ('remote-password', 'admin'),
+            ('local-path', '/Plone'),            
             ('remote-path', '/Plone'),
             ('remote-crawl-depth', -1),
             ('remote-skip-path', ''),
@@ -140,6 +141,8 @@ class RemoteSource(object):
             self.remote_skip_path = self.remote_skip_path.split()
         if self.remote_path[-1] == '/':
             self.remote_path = self.remote_path[:-1]
+        if self.local_path[-1] == '/':
+            self.local_path = self.local_path[:-1]
 
         # Load cached data from the given file
         self.cache = resolvePackageReferenceOrFile(options.get('cache', ''))
@@ -164,6 +167,7 @@ class RemoteSource(object):
             remote_url += '/'
         if path.startswith('/'):
             path = path[1:]
+
         url = urllib2.urlparse.urljoin(remote_url, urllib.quote(path))
         #remote = xmlrpclib.Server(
         #         url,
@@ -207,12 +211,14 @@ class RemoteSource(object):
             item = simplejson.loads(item)
             logger.info(':: Crawling %s' % item['_path'])
 
+            if self.local_path:
+                item['_path'] = self.local_path + item['_path'][len(self.remote_path):] 
             # item['_path'] is relative to domain root. we need relative to plone root
-            remote_url = self.remote_url
-            _,_,remote_path,_,_,_ = urlparse.urlparse(remote_url)
-            item['_path'] = item['_path'][len(remote_path):]
-            if item['_path'].startswith('/'):
-                item['_path'] = item['_path'][1:]
+#            remote_url = self.remote_url
+#            _,_,remote_path,_,_,_ = urlparse.urlparse(remote_url)
+#            item['_path'] = item['_path'][len(remote_path):]
+#            if item['_path'].startswith('/'):
+#                item['_path'] = item['_path'][1:]
 
             if item['_type'] == "Plone Site":
                 pass
