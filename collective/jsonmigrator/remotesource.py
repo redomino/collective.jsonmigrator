@@ -149,6 +149,7 @@ class RemoteSource(object):
             cache_file.close()
             setattr(self, MEMOIZE_PROPNAME, cache)
 
+         
     def get_option(self, name, default):
         request = self.context.get('REQUEST', {})
         return request.get(
@@ -157,7 +158,8 @@ class RemoteSource(object):
 
     @memoize
     def get_remote_item(self, path):
-        remote_url = self.remote_url+self.remote_path
+#        remote_url = self.remote_url+self.remote_path
+        remote_url = self.remote_url
         if not remote_url.endswith('/'):
             remote_url += '/'
         if path.startswith('/'):
