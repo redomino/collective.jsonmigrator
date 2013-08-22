@@ -121,10 +121,12 @@ class RemoteSource(object):
             ('remote-password', 'admin'),
             ('local-path', '/Plone'),            
             ('remote-path', '/Plone'),
+            ('remote-catalog-path', '/Plone/portal_catalog'),
+            ('remote-catalog-query', ''),
             ('remote-crawl-depth', -1),
             ('remote-skip-path', ''),
             ]
-
+            
     classProvides(ISectionBlueprint)
     implements(ISection)
 
@@ -137,8 +139,13 @@ class RemoteSource(object):
                     self.get_option(option, default))
         if type(self.remote_crawl_depth) in [str, unicode]:
             self.remote_crawl_depth = int(self.remote_crawl_depth)
+
         if type(self.remote_skip_path) in [str, unicode]:
             self.remote_skip_path = self.remote_skip_path.split()
+
+        if self.remote_catalog_query:
+            self.remote_ok_path = self.get_ok_path()
+
         if self.remote_path[-1] == '/':
             self.remote_path = self.remote_path[:-1]
         if self.local_path[-1] == '/':
@@ -152,7 +159,23 @@ class RemoteSource(object):
             cache_file.close()
             setattr(self, MEMOIZE_PROPNAME, cache)
 
-         
+    def get_ok_path(self):
+        catalog_query = '?catalog_query=%s' % urllib.quote(encodestring(self.remote_catalog_query))
+    
+    
+        url = urllib2.urlparse.urljoin(self.remote_url, urllib.quote(self.remote_catalog_path)) + catalog_query
+        
+        remote = Urllibrpc(url, self.remote_username, self.remote_password)
+
+        try:
+            items = remote.get_catalog_results()
+        except UrllibrpcException, e:
+            logger.error("Failed reading url '%s' with error code %s." %
+                         (e.url, e.code))
+            return set([])
+            
+        return set(simplejson.loads(items))
+
     def get_option(self, name, default):
         request = self.context.get('REQUEST', {})
         return request.get(
@@ -235,6 +258,14 @@ class RemoteSource(object):
                 if subitem_path[len(self.remote_path):] in self.remote_skip_path:
                     logger.info(':: Skipping -> ' + subitem_path)
                     continue
+
+                if self.remote_catalog_query:
+                    
+                    if subitem_path not in self.remote_ok_path:
+
+                        logger.info(':: Skipping (2) -> ' + subitem_path)
+                        continue
+                    
 
                 for subitem in self.get_items(subitem_path, depth+1):
                     yield subitem
