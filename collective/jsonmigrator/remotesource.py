@@ -219,6 +219,7 @@ class RemoteSource(object):
     def get_items(self, path, depth=0):
         if path and path[-1] == '/':
             path = path[:-1]
+
         if self.remote_crawl_depth == -1 or depth <= self.remote_crawl_depth:
 
             item, subitems = self.get_remote_item(path)
@@ -259,15 +260,13 @@ class RemoteSource(object):
                     logger.info(':: Skipping -> ' + subitem_path)
                     continue
 
-                if self.remote_catalog_query:
-                    
+                if self.remote_catalog_query:            
                     if subitem_path not in self.remote_ok_path:
-
                         logger.info(':: Skipping (2) -> ' + subitem_path)
                         continue
-                    
 
                 for subitem in self.get_items(subitem_path, depth+1):
+
                     yield subitem
 
     def __iter__(self):
