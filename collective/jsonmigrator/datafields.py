@@ -49,6 +49,9 @@ class DataFields(object):
                     if not key.startswith(self.datafield_prefix):
                         continue
 
+
+
+
                     fieldname = key[len(self.datafield_prefix):]
                     field = obj.getField(fieldname)
                     if field is None:
@@ -65,8 +68,11 @@ class DataFields(object):
 
                     if value != old_value:
                         field.set(obj, value)
-                        obj.setFilename(item[key]['filename'])
-                        obj.setContentType(item[key]['content_type'])
-
+                        try:
+                            field.setFilename(obj, item[key]['filename'])
+                            field.setContentType(obj, item[key]['content_type'])
+                        except:
+                            obj.setFilename(item[key]['filename'])
+                            obj.setContentType(item[key]['content_type'])
             yield item
 
